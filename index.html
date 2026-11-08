@@ -1,5 +1,5 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="雲礁守望：即時卡牌塔防，可以用房間代碼和朋友雙人對戰。"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>雲礁守望</title>
+<!doctype html><html lang="zh-Hant"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="英雄亂鬥：雲礁之戰，即時卡牌塔防，可以用房間代碼和朋友雙人對戰。"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>英雄亂鬥：雲礁之戰</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap">
 <style>
@@ -626,6 +626,10 @@ const CARDS=[
 {id:'mimic',name:'千面獸',cost:4,rar:'E',type:'troop',hero:1,place:'own',spawn:['mimic',1],desc:'每 4.5 秒變一次身：鐵甲犀牛（衝撞）→疾風巨鷹（會飛、射羽毛）→鋼刺刺蝟（護盾＋刺一圈）。登場先變犀牛衝一段。弱點：每種形態都只強一半，看準形態就好剋。'},
 {id:'blinkr',name:'瞬影魔',cost:3,rar:'R',type:'troop',hero:1,place:'own',spawn:['blinkr',1],desc:'「抓～不～到～」每一擊前都瞬移到敵人身側；登場連閃 4 個敵人各砍一刀。每第四下把小兵往後傳送一大段（英雄傳不走）。弱點：血少又只能單打，怕範圍攻擊。'},
 ];
+/* 封存：弱、沒特色或特效陽春的卡先收起來（資料保留）。管理員面板「啟用封存卡」打開就恢復。 */
+const ARCHIVE=['fox','lava','beetle','dandy','chips','rain','well','gear','elder','hill','mud','dice','sand','alien','chrono'];
+let ARCH_ON=true;try{const j=JSON.parse(localStorage.getItem('skyreef.v1')||'{}');if(j&&j.admin&&j.admin.unarch)ARCH_ON=false}catch(e){}
+const ARCHIVED=ARCH_ON?CARDS.filter(c=>ARCHIVE.includes(c.id)):[];if(ARCH_ON)for(let i=CARDS.length-1;i>=0;i--)if(ARCHIVE.includes(CARDS[i].id))CARDS.splice(i,1);
 const CARD={};CARDS.forEach(c=>CARD[c.id]=c);
 const MEMES=CARDS.filter(c=>c.meme).map(c=>c.id);
 const U={
@@ -761,13 +765,13 @@ const CHESTS=[
 {id:'hero',name:'超級英雄箱',cost:450,n:4,odds:[0,55,32,13],min:'E',c1:'#9FC3FF',c2:'#C8102E',desc:'4 張超級英雄卡，保底 1 張史詩以上',pool:'hero'},
 ];
 const RORD=['C','R','E','L'];
-const STARTER=['mush','kite','bee','fox','beetle','bell','mud','seed'];
+const STARTER=['mush','kite','bee','taizi','scoot','bell','garbage','seed'];
 
 /* ================= 存檔 ================= */
 const SKEY='skyreef.v1';
 const SITE_VER_INIT=9;function defSave(){const owned={};STARTER.forEach(id=>owned[id]={lv:1,cp:0});return {coins:600,owned,deck:STARTER.slice(),tro:0,w:0,l:0,d:0,first:true,mute:false,photo:true,seenVer:SITE_VER_INIT,admin:{coins:false,energy:false,ai:1,arenas:false},arena:null}}
-function load(){try{const j=JSON.parse(localStorage.getItem(SKEY)||'null');if(j&&j.owned&&Array.isArray(j.deck)&&j.deck.length===8){j.deck=j.deck.map(id=>CARD[id]?id:'mush');for(const k in j.owned)if(!CARD[k])delete j.owned[k];const o=Object.assign(defSave(),j);o.admin=Object.assign({coins:false,energy:false,ai:1,arenas:false},j.admin||{});return o}}catch(e){}return defSave()}
-function save(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const j=JSON.parse(localStorage.getItem(SKEY)||'null');if(j&&j.owned&&Array.isArray(j.deck)&&j.deck.length===8){{const ok=j.deck.filter(id=>CARD[id]);const pool=[...STARTER,...Object.keys(j.owned||{}),...CARDS.map(c=>c.id)].filter(id=>CARD[id]);for(const id of pool){if(ok.length>=8)break;if(!ok.includes(id))ok.push(id)}j.deck=ok.slice(0,8);for(const id of j.deck)if(!(j.owned||{})[id]){j.owned=j.owned||{};j.owned[id]={lv:1,cp:0}}}for(const k in j.owned)if(!CARD[k])delete j.owned[k];const o=Object.assign(defSave(),j);o.admin=Object.assign({coins:false,energy:false,ai:1,arenas:false},j.admin||{});return o}}catch(e){}return defSave()}
+function save(){S.savedAt=Date.now();try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}if(typeof cloudQueue==='function')cloudQueue()}
 let S=load();CARDS.forEach(c=>c.name0=c.name);function applyNames(){for(const k in (S.names||{}))if(CARD[k]&&S.names[k])CARD[k].name=S.names[k]}applyNames();function autoUnlock(){if(S.admin&&S.admin.allCards){CARDS.forEach(c=>{if(!S.owned[c.id])S.owned[c.id]={lv:1,cp:0}});S.first=false}}autoUnlock();
 const lvOf=id=>(S.owned[id]&&S.owned[id].lv)||1;
 const need=lv=>lv*2;
@@ -2825,7 +2829,7 @@ function makeAIDeck(){const st=AI_STYLES[Math.floor(rnd()*AI_STYLES.length)];las
   const add=(arr,n)=>{for(const id of shuffle(arr.slice())){if(n<=0)break;if(CARD[id]&&!d.includes(id)){d.push(id);n--}}};
   add(st.win,st.n1);add(st.sup,3);add(st.def,2);add(st.sp,st.n1>1?1:2);add([...st.sup,...st.def],8-d.length);
   const ha=id=>{const c=CARD[id];return !!(c.spawn&&U[c.spawn[0]].hitAir)};let na=d.filter(ha).length;
-  for(const id of shuffle(['kite','frost','magpie','typhoon','mech','dandy'])){if(na>=2)break;if(d.includes(id))continue;const j=d.findIndex(x=>!st.win.includes(x)&&!ha(x)&&CARD[x].spawn);if(j<0)break;d[j]=id;na++}
+  for(const id of shuffle(['kite','frost','magpie','typhoon','mech','dandy'].filter(x=>CARD[x]))){if(na>=2)break;if(d.includes(id))continue;const j=d.findIndex(x=>!st.win.includes(x)&&!ha(x)&&CARD[x].spawn);if(j<0)break;d[j]=id;na++}
   if(d.length<8)add(CARDS.map(c=>c.id),8-d.length);
   {const hs=shuffle(CARDS.filter(c=>c.hero&&(c.cost<10||rnd()<.3)).map(c=>c.id));let nh=d.filter(id=>CARD[id].hero).length;const want=st.n==='英雄流'?5:3+Math.floor(rnd()*3);
    const AC0=['sf','crystal','tao','psy','zomb','pap','spore','paper'];
@@ -3680,8 +3684,8 @@ document.querySelectorAll('#nav button').forEach(b=>b.addEventListener('click',(
    每次發布：SITE_VER 加 1，NOTES 寫一兩句這版改了什麼。
    發布新版時頁面會重新載入：對戰中每秒存一次戰況，重新載入後自動接回同一場；
    更新說明等回到主畫面才顯示，不打斷對戰。 */
-const SITE_VER=49;
-const NOTES={49:'雙人對戰小更新：為之後的公開版準備邀請連結（點連結就能直接加入房間）；在 claude.ai 上的玩法不變。',48:'第 11 批，科技和生活時事：勒索駭客（反派，病毒會擴散）、太空旅客（返航後砸進敵陣）、自駕計程車（直線衝撞）、健身狂人（越打肌肉越大）、掃地機器人（會吸掉子彈）。',47:'第 10 批，繼續跟時事有關：迷因幣大亨（攻擊力跟著幣價漲跌，會崩盤）、深偽怪客（反派，換臉隱身）、爆肝工程師（幫隊友超頻）、光電少女（架光電板自動射擊）、海廢清道夫（撿垃圾揉成球丟回去）。',46:'統計表可以自己重新模擬：在「角色勝率」頁按 500／2000／5000 場，就會在你的裝置上跑電腦對打並重算勝率，可隨時停止，不影響存檔。觀戰室的 AI 場可以按「換一場」或「全部換新」。',45:'觀戰室升級：上方顯示紅方手牌、下一張和潮光，下方是藍方，雙方怎麼出牌都看得到；電腦出牌前會想 0.8～1.5 秒，不會秒出；右上可切換 0.5×／1×／2× 速度。',44:'第 9 批，跟 AI 和時事有關：幻覺 AI（生成會吸引火力的分身，偶爾答錯）、詐騙頭目（反派，撒中獎傳單騙人過去再爆炸）、直播網紅（帶粉絲、收斗內）、氣候巫女（熱浪區，每一下天氣都不一樣）、演算法姬（看敵人出什麼，就推送剋星）。',43:'新增觀戰室（主畫面）：同時 3 場電腦高手對打（AI 場，等級 9、常用推薦牌組），可以隨時切換觀看，雙方都會喊出戰術。',42:'全面平衡：電腦對打 2000 場算出每張卡的勝率，太強的削弱、太弱的加強（月影怪盜不再入場偷潮光、心智孢子改 5 費、深淵魔君再削弱）。設定裡新增「角色勝率統計表」和「推薦牌組」，推薦牌組可以一鍵套用。',41:'第 8 批：烈陽鳳凰（倒下會變火蛋再重生）、機蛛女皇（反派，一直放小無人機）、點金術士（把小兵變成潮光）、麻糬大王（半血分裂成兩隻）、藤蔓森姬（種食人花）。',40:'燈塔射程加大（公主塔 112→135、國王塔 118→140），我方半場除了橋頭都在塔的保護範圍內；拖卡出兵時會用淡藍虛線畫出自己燈塔的射程。',39:'絲線人偶師的操控時間縮短：一般部隊 3 秒、英雄 2 秒（英雄現在也抓得住了）。剋制表整張重算，新英雄都會出現在「擅長對付」和「怕」裡。',38:'第 7 批，走奇葩路線：黑洞相撲（把小兵吸進肚子再吐出去）、碎鏡伯爵（反派，會跟敵人交換位置）、畫中仙（畫牆擋人、畫墨龍橫掃）、24H 店長（集滿 5 點就兌換大爆炸）、極速外送俠（把包裹直接送到燈塔）。',37:'剋制表全部重算，所有英雄都會出現在每張卡的「擅長對付／怕」裡，電腦也會用新的表來挑剋制卡。深淵魔君降臨的暈眩縮短到 0.5 秒。',36:'第 6 批，能力派：不死鋼爪（自癒＋狂暴）、風暴女神（雷雨雲和龍捲風）、磁極君王（反派，子彈會被反彈）、瞬影魔（每一擊都瞬移到背後）、千面獸（犀牛、老鷹、刺蝟輪流變）。另外依新規則，所有英雄的暈眩和定身都縮到 0.5 秒以內；竹林熊貓調弱。',35:'新增挑戰模式（主畫面「對戰」下面）：英雄聯軍、反派軍團、魔王降臨三種，電腦全派英雄、等級更高，贏了拿 500～1100 金幣，不影響獎盃。',34:'更新時會停在你原本的畫面：在卡牌頁就留在卡牌頁（連捲動位置都保留），只有正在對戰時才會接回那一場。',33:'第 5 批，越來越扯：喵喵大魔神（8 費巨貓，貓掌從天而降）、虛空皇帝（反派，黑洞會吞子彈）、霸王龍特快（一口吞小怪）、電吉他狂人（全場被迫跳舞）、無敵阿嬤（藍白拖追著打、念經讓你不敢動）。',32:'部隊倒下時會冒一團白煙、飄出小幽靈，英雄倒下則飄出金色星星',31:'燈塔被打中會噴碎石；被打倒時塔身會下沉崩塌、揚起塵土，皇冠彈出來並寫「+1 皇冠！」',30:'第 4 批 5 位：赤焰龍騎（會飛的 7 費大傢伙）、骨冠巫妖（反派，敵人死了會變骷髏）、聖光天使（能讓倒下的英雄復活）、竹林熊貓、迷霧幽魂。',29:'法術落下時有衝擊環、放射光線、中心閃光和火花，每個法術顏色不同，對手放的法術也看得出來',28:'剋制改成靠特性相剋，不再一直暈：新卡「紙紮兵團」用人海圍死單體慢攻的英雄，但怕範圍攻擊；狗仔改成閃光吸引英雄火力；道士不再緩速。每張卡的詳情頁會寫「擅長對付」和「怕」誰。',27:'電腦每場隨機帶 3～5 位英雄，把英雄當一般卡用。管理員面板新增「自動解鎖全部卡」，打開後新卡上線就直接解鎖。',26:'拖卡出兵時看得更清楚：不能放的區域有紅色斜線，放置點有呼吸光圈、整隊部隊的殘影和卡名標籤，潮光不夠會直接顯示還差幾點',25:'第 3 批 5 位：絲線人偶師（反派，能操控敵人）、赤鬼武士、時砂旅者、狂笑小丑（反派）、浪潮祭司（會幫隊友補血）。',24:'剋英雄卡削弱：英雄有「霸體」，連續被控 1 秒就掙脫並 2 秒免控；狗仔閃光只暈 0.6 秒，封印縮短、多受傷害降到 +20%。剋制卡現在是削弱英雄，不會讓英雄完全不能動。',23:'再來 5 位：深淵觸手魔、冰封女帝（反派）、狂博士（反派）、月嚎狼人、百獸馴師。狼人會變身，馴師帶獅子和野豬，女帝的冰能把人整個凍住。',22:'卡片詳情面板重新整理（拖曳把手、彩色數值格、條紋進度條），手牌付得起時有白色內框',21:'角色改成大頭 Q 版比例，五官跟著放大，看起來更可愛',20:'潮光被偷或被凍結時，潮光條會閃紅或變冰藍，並寫出原因（例如「-2 被月影怪盜偷走」）。怪盜掉包改成每 6 秒最多一次，凍結齒輪改成 4 秒。',19:'放進出戰牌組的卡不會再出現在收藏區；戰場上的血條、出兵落地的衝擊環和首頁更新說明卡都重新設計',18:'電腦出牌更有策略：不再把小兵一隻隻送死、不亂丟法術打健康的塔、費用落後時先存費再反擊。塔變得更耐打，比賽不會太快結束。',17:'新英雄 5 位：鐵鉤船長、緋月伯爵（反派吸血鬼）、星塵航員、金鐘和尚、沙漠快槍手。每位都有自己的出場大招、招牌技和音效，也都有更便宜的卡能剋制。',16:'可以幫任何卡改名字：在卡牌頁點一張卡，輸入名字按「改名」。名字只存在你這台裝置。',15:'深淵魔君削弱：降臨只影響附近部隊、對手潮光改成 -1、血量和吸血降低。電腦碰到大魔王會全力出剋制卡，單出魔君不會再一路推到底。',14:'燈塔、寶箱和開箱動畫全部重畫，介面加上按鈕手感和轉場，角色多了明暗、臉頰和英雄的肌肉線條。',13:'每張卡都有剋得掉的牌：被封印的英雄受到的傷害 +35%，水晶塔燒英雄更痛，10 費深淵魔君用 7 費的組合就能擋。電腦會看你出什麼，拿剋制卡回應，但不會強到不合理。',12:'剋英雄卡變強：被封印的英雄多受 35% 傷害，抗能水晶塔打英雄更痛。新英雄和反派被貼符後，一樣放不出招牌技能。',11:'新增一批原創英雄和反派（含 10 費的深淵魔君），電腦每場都會帶 2～4 位英雄上場；修正部隊和英雄卡在橋頭、塔後面不動的問題。',10:'更新時不會再把你踢出對戰：頁面重新載入後會自動接回原本那一場，更新說明回到主畫面才顯示。另外新增 5 張剋英雄卡、每種角色不同的普攻特效，並修正卡頓。'};
+const SITE_VER=53;
+const NOTES={53:'帳號與雲端存檔：登入 claude.ai（可用 Google 帳號）就會自動把進度存到雲端，換裝置登入同一個帳號就接得上。沒登入也能用「存檔碼」搬家，在設定（齒輪）→ 帳號與存檔。',52:'對戰貼圖：對戰畫面右下角的 💬 可以傳角色貼圖，有「就這？」「好險」「GG」「再來啊」「哭啊」「謝謝你的塔」等 8 種。雙人對戰時對手和觀眾都看得到，不想看可以靜音對手貼圖。跟電腦打時，電腦偶爾也會傳貼圖挑釁，30 秒最多一次，管理員面板可以關掉。',51:'遊戲改名為「英雄亂鬥：雲礁之戰」。存檔、卡牌和連結都不變。',50:'精簡卡池：封存 15 張偏弱或沒特色的卡（焰狐忍者、熔岩拳鬥士、攻城鐵像、星光砲台、骰子傭兵團、暴雨、重力井、凍結齒輪、長輩圖轟炸、命運骰、泥沼、瞭望高地、沙塵暴、啵啵星人、時砂旅者）。牌組裡有這些卡的會自動換成別張；想找回來可在管理員面板打開「啟用封存卡」。',49:'雙人對戰小更新：為之後的公開版準備邀請連結（點連結就能直接加入房間）；在 claude.ai 上的玩法不變。',48:'第 11 批，科技和生活時事：勒索駭客（反派，病毒會擴散）、太空旅客（返航後砸進敵陣）、自駕計程車（直線衝撞）、健身狂人（越打肌肉越大）、掃地機器人（會吸掉子彈）。',47:'第 10 批，繼續跟時事有關：迷因幣大亨（攻擊力跟著幣價漲跌，會崩盤）、深偽怪客（反派，換臉隱身）、爆肝工程師（幫隊友超頻）、光電少女（架光電板自動射擊）、海廢清道夫（撿垃圾揉成球丟回去）。',46:'統計表可以自己重新模擬：在「角色勝率」頁按 500／2000／5000 場，就會在你的裝置上跑電腦對打並重算勝率，可隨時停止，不影響存檔。觀戰室的 AI 場可以按「換一場」或「全部換新」。',45:'觀戰室升級：上方顯示紅方手牌、下一張和潮光，下方是藍方，雙方怎麼出牌都看得到；電腦出牌前會想 0.8～1.5 秒，不會秒出；右上可切換 0.5×／1×／2× 速度。',44:'第 9 批，跟 AI 和時事有關：幻覺 AI（生成會吸引火力的分身，偶爾答錯）、詐騙頭目（反派，撒中獎傳單騙人過去再爆炸）、直播網紅（帶粉絲、收斗內）、氣候巫女（熱浪區，每一下天氣都不一樣）、演算法姬（看敵人出什麼，就推送剋星）。',43:'新增觀戰室（主畫面）：同時 3 場電腦高手對打（AI 場，等級 9、常用推薦牌組），可以隨時切換觀看，雙方都會喊出戰術。',42:'全面平衡：電腦對打 2000 場算出每張卡的勝率，太強的削弱、太弱的加強（月影怪盜不再入場偷潮光、心智孢子改 5 費、深淵魔君再削弱）。設定裡新增「角色勝率統計表」和「推薦牌組」，推薦牌組可以一鍵套用。',41:'第 8 批：烈陽鳳凰（倒下會變火蛋再重生）、機蛛女皇（反派，一直放小無人機）、點金術士（把小兵變成潮光）、麻糬大王（半血分裂成兩隻）、藤蔓森姬（種食人花）。',40:'燈塔射程加大（公主塔 112→135、國王塔 118→140），我方半場除了橋頭都在塔的保護範圍內；拖卡出兵時會用淡藍虛線畫出自己燈塔的射程。',39:'絲線人偶師的操控時間縮短：一般部隊 3 秒、英雄 2 秒（英雄現在也抓得住了）。剋制表整張重算，新英雄都會出現在「擅長對付」和「怕」裡。',38:'第 7 批，走奇葩路線：黑洞相撲（把小兵吸進肚子再吐出去）、碎鏡伯爵（反派，會跟敵人交換位置）、畫中仙（畫牆擋人、畫墨龍橫掃）、24H 店長（集滿 5 點就兌換大爆炸）、極速外送俠（把包裹直接送到燈塔）。',37:'剋制表全部重算，所有英雄都會出現在每張卡的「擅長對付／怕」裡，電腦也會用新的表來挑剋制卡。深淵魔君降臨的暈眩縮短到 0.5 秒。',36:'第 6 批，能力派：不死鋼爪（自癒＋狂暴）、風暴女神（雷雨雲和龍捲風）、磁極君王（反派，子彈會被反彈）、瞬影魔（每一擊都瞬移到背後）、千面獸（犀牛、老鷹、刺蝟輪流變）。另外依新規則，所有英雄的暈眩和定身都縮到 0.5 秒以內；竹林熊貓調弱。',35:'新增挑戰模式（主畫面「對戰」下面）：英雄聯軍、反派軍團、魔王降臨三種，電腦全派英雄、等級更高，贏了拿 500～1100 金幣，不影響獎盃。',34:'更新時會停在你原本的畫面：在卡牌頁就留在卡牌頁（連捲動位置都保留），只有正在對戰時才會接回那一場。',33:'第 5 批，越來越扯：喵喵大魔神（8 費巨貓，貓掌從天而降）、虛空皇帝（反派，黑洞會吞子彈）、霸王龍特快（一口吞小怪）、電吉他狂人（全場被迫跳舞）、無敵阿嬤（藍白拖追著打、念經讓你不敢動）。',32:'部隊倒下時會冒一團白煙、飄出小幽靈，英雄倒下則飄出金色星星',31:'燈塔被打中會噴碎石；被打倒時塔身會下沉崩塌、揚起塵土，皇冠彈出來並寫「+1 皇冠！」',30:'第 4 批 5 位：赤焰龍騎（會飛的 7 費大傢伙）、骨冠巫妖（反派，敵人死了會變骷髏）、聖光天使（能讓倒下的英雄復活）、竹林熊貓、迷霧幽魂。',29:'法術落下時有衝擊環、放射光線、中心閃光和火花，每個法術顏色不同，對手放的法術也看得出來',28:'剋制改成靠特性相剋，不再一直暈：新卡「紙紮兵團」用人海圍死單體慢攻的英雄，但怕範圍攻擊；狗仔改成閃光吸引英雄火力；道士不再緩速。每張卡的詳情頁會寫「擅長對付」和「怕」誰。',27:'電腦每場隨機帶 3～5 位英雄，把英雄當一般卡用。管理員面板新增「自動解鎖全部卡」，打開後新卡上線就直接解鎖。',26:'拖卡出兵時看得更清楚：不能放的區域有紅色斜線，放置點有呼吸光圈、整隊部隊的殘影和卡名標籤，潮光不夠會直接顯示還差幾點',25:'第 3 批 5 位：絲線人偶師（反派，能操控敵人）、赤鬼武士、時砂旅者、狂笑小丑（反派）、浪潮祭司（會幫隊友補血）。',24:'剋英雄卡削弱：英雄有「霸體」，連續被控 1 秒就掙脫並 2 秒免控；狗仔閃光只暈 0.6 秒，封印縮短、多受傷害降到 +20%。剋制卡現在是削弱英雄，不會讓英雄完全不能動。',23:'再來 5 位：深淵觸手魔、冰封女帝（反派）、狂博士（反派）、月嚎狼人、百獸馴師。狼人會變身，馴師帶獅子和野豬，女帝的冰能把人整個凍住。',22:'卡片詳情面板重新整理（拖曳把手、彩色數值格、條紋進度條），手牌付得起時有白色內框',21:'角色改成大頭 Q 版比例，五官跟著放大，看起來更可愛',20:'潮光被偷或被凍結時，潮光條會閃紅或變冰藍，並寫出原因（例如「-2 被月影怪盜偷走」）。怪盜掉包改成每 6 秒最多一次，凍結齒輪改成 4 秒。',19:'放進出戰牌組的卡不會再出現在收藏區；戰場上的血條、出兵落地的衝擊環和首頁更新說明卡都重新設計',18:'電腦出牌更有策略：不再把小兵一隻隻送死、不亂丟法術打健康的塔、費用落後時先存費再反擊。塔變得更耐打，比賽不會太快結束。',17:'新英雄 5 位：鐵鉤船長、緋月伯爵（反派吸血鬼）、星塵航員、金鐘和尚、沙漠快槍手。每位都有自己的出場大招、招牌技和音效，也都有更便宜的卡能剋制。',16:'可以幫任何卡改名字：在卡牌頁點一張卡，輸入名字按「改名」。名字只存在你這台裝置。',15:'深淵魔君削弱：降臨只影響附近部隊、對手潮光改成 -1、血量和吸血降低。電腦碰到大魔王會全力出剋制卡，單出魔君不會再一路推到底。',14:'燈塔、寶箱和開箱動畫全部重畫，介面加上按鈕手感和轉場，角色多了明暗、臉頰和英雄的肌肉線條。',13:'每張卡都有剋得掉的牌：被封印的英雄受到的傷害 +35%，水晶塔燒英雄更痛，10 費深淵魔君用 7 費的組合就能擋。電腦會看你出什麼，拿剋制卡回應，但不會強到不合理。',12:'剋英雄卡變強：被封印的英雄多受 35% 傷害，抗能水晶塔打英雄更痛。新英雄和反派被貼符後，一樣放不出招牌技能。',11:'新增一批原創英雄和反派（含 10 費的深淵魔君），電腦每場都會帶 2～4 位英雄上場；修正部隊和英雄卡在橋頭、塔後面不動的問題。',10:'更新時不會再把你踢出對戰：頁面重新載入後會自動接回原本那一場，更新說明回到主畫面才顯示。另外新增 5 張剋英雄卡、每種角色不同的普攻特效，並修正卡頓。'};
 const RESUME_KEY='skyreef_resume_v1';let snapT=0;
 function snapBattle(){try{if(!G||G.auto||G.headless||G.over||G.spec)return;const idx=new Map();G.ents.forEach((e,i)=>idx.set(e,i));
   const ser=(v,d)=>{if(typeof v==='function')return undefined;if(v===null||typeof v!=='object')return v;if(d>0&&idx.has(v))return {__e:idx.get(v)};if(d>5)return undefined;if(Array.isArray(v))return v.map(x=>ser(x,d+1));const o={};for(const k in v){const r=ser(v[k],d+1);if(r!==undefined)o[k]=r}return o};
@@ -3707,7 +3711,7 @@ function updNoteHTML(){if((S.seenVer||0)>=SITE_VER)return '';const vs=Object.key
   return `<div class="updNote panel" id="updNote"><b>已更新到 v${SITE_VER}</b>${vs.map(v=>`<p>${NOTES[v]}</p>`).join('')}<button class="gbtn b-white" id="updOk">知道了</button></div>`}
 function render_view(){updTop();const V=$('#view');V.classList.remove('picking');homeAnim=false;
   if(curView==='home'){const own=Object.keys(S.owned).length;
-    V.innerHTML=`<div class="hero"><div class="logo">雲礁<em>守望</em></div><div class="tagline">浮島燈塔攻防戰</div>
+    V.innerHTML=`<div class="hero"><div class="logo">英雄<em>亂鬥</em></div><div class="tagline">雲礁之戰・即時卡牌對戰</div>
       ${updNoteHTML()}${arenaCardHTML()}
       ${S.first?`<button class="gift panel" id="gift"><div class="ic">${chestHTML('#FFE38A','#FF7A45').replace('class="chest"','class="chest" style="transform:scale(.3);transform-origin:0 0;position:absolute;animation:none"')}</div><div><b>啟航禮包</b><span>免費 6 張卡，必出一張傳說</span></div><span class="go gbtn b-gold">領取</span></button>`:''}
       <button class="cta gbtn b-gold" id="go">對戰<small>拖曳卡牌出兵・打爆心核燈塔直接獲勝</small></button><button class="chalBtn gbtn b-red" id="chal">⚔ 挑戰模式<small>電腦全派英雄和反派，等級更高</small></button><button class="chalBtn gbtn b-blue" id="specB">👀 觀戰室<small>同時 3 場高手對打，看高勝率牌組怎麼打</small></button>
@@ -3799,7 +3803,7 @@ function simUI(){const b=$('#simBox');if(!b)return;
   if(SIMRUN.on){const el=(performance.now()-SIMRUN.t0)/1000,per=SIMRUN.g?el/SIMRUN.g:0,left=Math.max(0,(SIMRUN.N-SIMRUN.g)*per);
     b.innerHTML=`<div class="simP"><i style="width:${SIMRUN.g/SIMRUN.N*100}%"></i></div><small>模擬中 ${SIMRUN.g} / ${SIMRUN.N} 場${SIMRUN.g>3?`・預估還要 ${left>90?Math.ceil(left/60)+' 分鐘':Math.ceil(left)+' 秒'}`:''}</small><button class="gbtn b-white" id="simStop">停止</button>`;$('#simStop').onclick=()=>{SIMRUN.stop=true}}
   else{b.innerHTML=`<small>重新模擬勝率：</small>${[500,2000,5000].map(n=>`<button class="gbtn b-blue" data-sim="${n}">${n} 場</button>`).join('')}`;b.querySelectorAll('[data-sim]').forEach(x=>x.onclick=()=>simStart(+x.dataset.sim))}}
-function statsPanel(tab){balLoad();const cs=S.cs||{};const nm=id=>esc(CARD[id].name);
+function statsPanel(tab){balLoad();BAL.decks=BAL.decks.filter(d=>d.ids.every(id=>CARD[id]));const cs=S.cs||{};const nm=id=>esc(CARD[id].name);
   let body='';
   if(tab==='deck'){
     body=BAL.decks.length?BAL.decks.map((d,i)=>{const miss=d.ids.filter(id=>!S.owned[id]).length;const avg=(d.ids.reduce((a,x)=>a+CARD[x].cost,0)/8).toFixed(1);
@@ -3825,7 +3829,7 @@ function specHud(){const P=G.P[1],box=$('#specTop');if(!box)return;const en=Math
   box.innerHTML=`<div class="spRow"><span class="spLbl">紅方手牌</span>${P.hand.map(h=>mini(h.id)).join('')}<span class="spNx">下一張</span>${mini(P.q[0],'nx')}</div>
    <div class="spRow2"><div class="spE"><i style="width:${P.energy*10}%"></i><b>${en}</b></div><div class="spSpd">${[.5,1,2].map(v=>`<button class="${SPEC.speed===v?'on':''}" data-spd="${v}">${v}×</button>`).join('')}</div></div>`;
   box.querySelectorAll('[data-spd]').forEach(b=>b.onclick=()=>{SPEC.speed=+b.dataset.spd;SPEC.key=''})}
-function specPick(){if(BAL.decks.length&&rnd()<.6){const d=BAL.decks[Math.floor(rnd()*BAL.decks.length)];return {ids:d.ids.slice(),n:d.n.replace(' 雙主力','')}}const ids=makeAIDeck();return {ids,n:lastAIStyle?lastAIStyle.n:'隨機'}}
+function specPick(){const DK=BAL.decks.filter(d=>d.ids.every(id=>CARD[id]));if(DK.length&&rnd()<.6){const d=DK[Math.floor(rnd()*DK.length)];return {ids:d.ids.slice(),n:d.n.replace(' 雙主力','')}}const ids=makeAIDeck();return {ids,n:lastAIStyle?lastAIStyle.n:'隨機'}}
 function specMake(i){const keep=G,vis=!$('#battle').hidden;let a,b;for(let k=0;k<8;k++){a=specPick();b=specPick();const key=a.n+'|'+b.n;if(a.n!==b.n&&!SPEC.rooms.some((r,j)=>r&&j!==i&&(r.a.n+'|'+r.b.n===key||r.b.n+'|'+r.a.n===key)))break}
   startBattle({spec:1,headless:true,deck:a.ids,opp:b.ids,lv:9,arena:Math.floor(rnd()*ARENAS.length)});G.headless=true;G.room=i;
   const r={G,a,b,no:(SPEC.rooms[i]?SPEC.rooms[i].no:0)+1};SPEC.rooms[i]=r;G=keep;$('#battle').hidden=!vis;if(vis&&G){lastHud={};G.hvShown=-1;renderHand()}return r}
@@ -3846,6 +3850,47 @@ function specPanel(){clearInterval(SPEC.tmr);const draw=()=>{if(!$('#specList'))
     document.querySelectorAll('[data-rr]').forEach(b=>b.onclick=()=>{specMake(+b.dataset.rr);sfx('card');draw()});$('#spAll').onclick=()=>{for(let i=0;i<SPEC.rooms.length;i++)specMake(i);sfx('card');draw()};document.querySelectorAll('[data-sx]').forEach(b=>b.onclick=()=>{const x=(window.__specX||[])[+b.dataset.sx];if(x&&x.onWatch){closeOv();x.onWatch()}})};
   $('#ovRoot').innerHTML=`<div class="sheetBg" id="sb"><div class="sheet" role="dialog" aria-label="觀戰室"><h3>👀 觀戰室</h3><p class="d" style="color:var(--muted)">3 場電腦高手同時在打（等級 9，常用推薦牌組）。點一場進去看，雙方會喊出自己的戰術；左上角 ✕ 回到這裡換場。</p><div class="adm" id="specList"></div><div class="acts"><button class="btn gbtn b-white" id="dClose">離開觀戰室</button></div></div></div>`;
   $('#sb').onclick=e=>{if(e.target.id==='sb'||e.target.id==='dClose')specClose()};draw();SPEC.tmr=setInterval(draw,1000)}
+/* ================= 帳號與雲端存檔 =================
+   在 claude.ai 上：用 claude.ai 帳號（可用 Google 登入）當身分，進度存到這個遊戲的資料庫 data/users/<id>/save，
+   只有本人讀得到；換裝置登入同一個帳號就會拿到。存檔有時間戳，較新的一邊為準。
+   沒登入或只有觀看權限：只存在這台裝置，可以用「存檔碼」搬家。 */
+const CLOUD={st:'init',db:null,ref:null,name:'',last:0,tm:null,busy:false};
+function cloudText(){return {init:'正在確認帳號…',on:`已用 claude.ai 帳號登入${CLOUD.name?'（'+esc(CLOUD.name)+'）':''}，進度自動存到雲端${CLOUD.last?'・上次同步 '+new Date(CLOUD.last).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}):''}`,ro:'已登入，但這個連結只有觀看權限，進度只存在這台裝置（請擁有者在分享選單把你設為「參與者」）',guest:'沒有登入 claude.ai：進度只存在這台裝置，可用存檔碼搬到別台',err:'雲端暫時連不上，進度先存在這台裝置，稍後會再試'}[CLOUD.st]||''}
+function cloudUI(){const t=$('#acctTxt');if(t)t.innerHTML=cloudText();const b=$('#acctBox');if(b)acctPanel()}
+async function cloudPush(){if(!CLOUD.ref||CLOUD.busy||CLOUD.st==='ro')return;CLOUD.busy=true;try{await CLOUD.ref.set({s:JSON.stringify(S),savedAt:S.savedAt||Date.now(),ver:SITE_VER});CLOUD.last=Date.now();CLOUD.st='on'}catch(e){CLOUD.st=e&&e.code==='invalid_argument'?'ro':'err'}CLOUD.busy=false;cloudUI()}
+function cloudQueue(){if(!CLOUD.ref||CLOUD.st==='ro')return;clearTimeout(CLOUD.tm);CLOUD.tm=setTimeout(cloudPush,4000)}
+function applySaveString(str){localStorage.setItem(SKEY,str);S=load();try{applyNames()}catch(e){}try{autoUnlock()}catch(e){}homeBg=null;updTop();if(!G||$('#battle').hidden)render_view()}
+async function cloudInit(){try{if(!window.claude||!claude.use){CLOUD.st='guest';cloudUI();return}
+  const [db,us]=await Promise.all([claude.use('db'),claude.use('user')]);if(!db||!us){CLOUD.st='guest';cloudUI();return}
+  const uid=await us.id();if(!uid){CLOUD.st='guest';cloudUI();return}
+  try{const me=await us.me();CLOUD.name=me&&me.name||''}catch(e){}
+  CLOUD.db=db;CLOUD.ref=db.doc('data/users/'+uid+'/save');
+  const snap=await CLOUD.ref.get();const local=S.savedAt||0;
+  if(snap.exists){const d=snap.data()||{};const remote=d.savedAt||0;
+    if(remote>local+3000&&typeof d.s==='string'){const apply=()=>{applySaveString(d.s);CLOUD.last=Date.now();CLOUD.st='on';cloudUI();banner('已載入雲端進度')};if(G&&!$('#battle').hidden){const w=setInterval(()=>{if(!G||$('#battle').hidden){clearInterval(w);apply()}},1000)}else apply()}
+    else{CLOUD.st='on';if(local>remote+3000)await cloudPush();else CLOUD.last=remote}}
+  else{CLOUD.st='on';await cloudPush()}
+  cloudUI();document.addEventListener('visibilitychange',()=>{if(document.hidden&&CLOUD.ref)cloudPush()})}
+ catch(e){CLOUD.st='err';cloudUI()}}
+function saveCode(){return btoa(unescape(encodeURIComponent(JSON.stringify(S))))}
+function acctPanel(){
+  $('#ovRoot').innerHTML=`<div class="sheetBg" id="sb"><div class="sheet" role="dialog" aria-label="帳號與存檔" id="acctBox"><h3>👤 帳號與存檔</h3>
+   <p class="d" style="color:var(--muted)">${cloudText()}</p>
+   ${CLOUD.st==='on'?`<div class="btnRow" style="justify-content:flex-start"><button class="btn gbtn b-blue" id="acSync">立即同步</button></div>`:''}
+   ${CLOUD.st==='guest'?`<p class="d">想要雲端存檔：登入 claude.ai（可以用 Google 帳號）再打開這個遊戲，進度就會自動跟著帳號走。</p>`:''}
+   <h4 style="margin:14px 0 6px">存檔碼（換裝置、備份用）</h4>
+   <div class="btnRow" style="justify-content:flex-start;gap:6px"><button class="btn gbtn b-white" id="acExp">複製我的存檔碼</button></div>
+   <textarea id="acIn" rows="3" placeholder="把存檔碼貼在這裡，按「匯入」" style="width:100%;margin-top:8px;border:2px solid var(--ink);border-radius:10px;padding:6px;font:12px monospace;box-sizing:border-box"></textarea>
+   <div class="btnRow" style="justify-content:flex-start"><button class="btn gbtn b-gold" id="acImp">匯入</button><small id="acMsg" style="font-weight:900;color:var(--muted)"></small></div>
+   <div class="acts"><button class="btn gbtn b-white" id="dClose">關閉</button></div></div></div>`;
+  $('#sb').onclick=e=>{if(e.target.id==='sb'||e.target.id==='dClose')closeOv()};
+  if($('#acSync'))$('#acSync').onclick=async()=>{await cloudPush();acctPanel()};
+  $('#acExp').onclick=()=>{const c=saveCode();const done=()=>{$('#acMsg').textContent='已複製存檔碼'};try{navigator.clipboard.writeText(c).then(done,()=>{$('#acIn').value=c;$('#acIn').select();$('#acMsg').textContent='已放進下面的框，請手動複製'})}catch(e){$('#acIn').value=c;$('#acMsg').textContent='已放進下面的框，請手動複製'}};
+  let armed=false;$('#acImp').onclick=()=>{const v=$('#acIn').value.trim();let j=null;try{j=JSON.parse(decodeURIComponent(escape(atob(v))))}catch(e){}
+    if(!j||!j.owned||!Array.isArray(j.deck)){$('#acMsg').textContent='存檔碼看起來不對';return}
+    if(!armed){armed=true;$('#acImp').textContent='確定覆蓋目前進度';$('#acMsg').textContent='會用存檔碼取代這台裝置的進度';return}
+    j.savedAt=Date.now();applySaveString(JSON.stringify(j));save();closeOv();banner('已匯入存檔')}}
+setTimeout(cloudInit,600);
 function adminPanel(){const A=S.admin;const aiN={0.5:'很弱',1:'一般',1.5:'很強'}[A.ai]||'一般';
   $('#ovRoot').innerHTML=`<div class="sheetBg" id="sb"><div class="sheet" role="dialog" aria-label="管理員模式"><h3>管理員模式</h3><p class="d" style="color:var(--muted)">開發者用的作弊開關，只影響這台裝置的存檔。</p><div class="adm">
    <div class="row2"><div><b>無限金幣</b><small>開箱不扣錢</small></div><button class="sw ${A.coins?'on':''}" data-k="coins" aria-label="無限金幣"></button></div>
@@ -3854,6 +3899,8 @@ function adminPanel(){const A=S.admin;const aiN={0.5:'很弱',1:'一般',1.5:'�
    <div class="row2"><div><b>解鎖全部競技場</b><small>${ARENAS.length} 個場地都能選</small></div><button class="sw ${A.arenas?'on':''}" data-k="arenas" aria-label="解鎖全部競技場"></button></div>
    <div class="row2"><div><b>加 10000 金幣</b><small>目前 ${S.coins}</small></div><button class="gbtn b-gold" id="aCoin">加錢</button></div>
    <div class="row2"><div><b>角色勝率統計表</b><small>模擬勝率、你的戰績、推薦牌組</small></div><button class="gbtn b-blue" id="aStat">查看</button></div>
+   <div class="row2 acct"><div><b>帳號與存檔</b><small id="acctTxt">${cloudText()}</small></div><button class="gbtn b-blue" id="aAcct">管理</button></div>
+   <div class="row2"><div><b>啟用封存卡</b><small>${ARCHIVE.length} 張弱卡已封存；打開後重新整理就恢復</small></div><button class="sw ${A.unarch?'on':''}" data-k="unarch" aria-label="啟用封存卡"></button></div>
    <div class="row2"><div><b>自動解鎖全部卡</b><small>測試用：所有卡和之後新增的卡都自動解鎖</small></div><button class="sw ${A.allCards?'on':''}" data-k="allCards" aria-label="自動解鎖全部卡"></button></div>
    <div class="row2"><div><b>解鎖全部卡</b><small>${Object.keys(S.owned).length} / ${CARDS.length} 張</small></div><button class="gbtn b-green" id="aAll">解鎖</button></div>
    <div class="row2"><div><b>全部卡升到滿級</b><small>Lv.9，對手也會跟著變強</small></div><button class="gbtn b-green" id="aMax">升級</button></div>
@@ -3863,7 +3910,7 @@ function adminPanel(){const A=S.admin;const aiN={0.5:'很弱',1:'一般',1.5:'�
   $('#sb').onclick=e=>{if(e.target.id==='sb'||e.target.id==='dClose'){closeOv();render_view()}};
   document.querySelectorAll('.adm .sw').forEach(b=>b.onclick=()=>{A[b.dataset.k]=!A[b.dataset.k];homeBg=null;re()});
   $('#aAi').onclick=()=>{A.ai=A.ai===1?1.5:A.ai===1.5?0.5:1;re()};
-  $('#aStat').onclick=()=>statsPanel('wr');
+  $('#aStat').onclick=()=>statsPanel('wr');$('#aAcct').onclick=()=>acctPanel();
   $('#aCoin').onclick=()=>{S.coins+=10000;sfx('chest');re()};
   $('#aAll').onclick=()=>{CARDS.forEach(c=>{if(!S.owned[c.id])S.owned[c.id]={lv:1,cp:0}});S.first=false;sfx('rare');re()};
   $('#aMax').onclick=()=>{CARDS.forEach(c=>S.owned[c.id]={lv:9,cp:0});S.first=false;sfx('legend');re()};
@@ -4189,7 +4236,7 @@ async function roomTransport(code,role){
       r.presence({role:'host',pk}).catch(()=>{})},PK_MS);
     let lastIn=-1,nk=0;
     r.onPeers(ch=>{for(const p of ch.joined.concat(ch.updated)){if(p.sameTab)continue;const g=p.presence&&p.presence.pv;if(!g)continue;
-      if(g.hello)cb({t:'hello',...g.hello,via:p.peer});if(g.bye)cb({t:'bye'});if(g.nk&&g.nk!==nk){nk=g.nk;cb({t:'needkey'})}if(g.ping)cb({t:'ping',at:g.ping});if(g.ka)cb({t:'kack',k:g.ka});
+      if(g.hello)cb({t:'hello',...g.hello,via:p.peer});if(g.bye)cb({t:'bye'});if(g.nk&&g.nk!==nk){nk=g.nk;cb({t:'needkey'})}if(g.ping)cb({t:'ping',at:g.ping});if(g.ka)cb({t:'kack',k:g.ka});if(g.sk&&g.sk.n>(tx.skN||0)){tx.skN=g.sk.n;cb({t:'stk',id:g.sk.id,n:g.sk.n})}
       for(const it of g.in||[])if(it.n>lastIn){lastIn=it.n;cb({t:'intent',...it})}}
       for(const p of ch.left)if(!p.sameTab&&p.presence&&p.presence.pv)cb({t:'gone'})});
   }else{
@@ -4199,7 +4246,7 @@ async function roomTransport(code,role){
     if(role==='spec'){r.presence({role:'spec'}).catch(()=>{});tx.send=()=>0;return tx}
     const pv={in:[]};let tm=null;
     const flush=()=>{tm=null;r.presence({role:'guest',pv}).catch(()=>{})};
-    tx.send=o=>{if(o.t==='hello')pv.hello={deck:o.deck,lv:o.lv,name:o.name,id:o.id};else if(o.t==='intent'){pv.in.push({n:o.n,i:o.i,id:o.id,x:o.x,y:o.y});if(pv.in.length>6)pv.in.shift()}else if(o.t==='ping')pv.ping=o.at;else if(o.t==='bye')pv.bye=1;else if(o.t==='needkey')pv.nk=(pv.nk||0)+1;else if(o.t==='kack')pv.ka=o.k;if(!tm)tm=setTimeout(flush,0);return 0};
+    tx.send=o=>{if(o.t==='hello')pv.hello={deck:o.deck,lv:o.lv,name:o.name,id:o.id};else if(o.t==='intent'){pv.in.push({n:o.n,i:o.i,id:o.id,x:o.x,y:o.y});if(pv.in.length>6)pv.in.shift()}else if(o.t==='ping')pv.ping=o.at;else if(o.t==='bye')pv.bye=1;else if(o.t==='needkey')pv.nk=(pv.nk||0)+1;else if(o.t==='kack')pv.ka=o.k;else if(o.t==='stk')pv.sk={n:o.n,id:o.id};if(!tm)tm=setTimeout(flush,0);return 0};
   }
   return tx}
 function loadMqtt(){return window.mqtt?Promise.resolve(true):new Promise(res=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js';s.integrity='sha384-u4uqeACkFcoKl57rBQJHVGDd1pqhW4w8X3WjTu1ZksPdxoLqdt34jpoNkJisE25W';s.crossOrigin='anonymous';s.onload=()=>res(true);s.onerror=()=>res(false);document.head.appendChild(s)})}
@@ -4234,7 +4281,7 @@ function ser(v,d){if(v==null)return v;const t=typeof v;
   return undefined}
 function serEnt(e){const o={};for(const k in e){if(SKIP.has(k)||k[0]==='_')continue;const s=ser(e[k],1);if(s!==undefined)o[k]=s}return o}
 const serP=P=>({energy:Math.round(P.energy*100)/100,hand:P.hand.map(h=>({id:h.id,stolen:!!h.stolen})),next:P.q[0],freeze:Math.round((P.freeze||0)*100)/100,crowns:P.crowns,hv:P.hv});
-const HO={seq:0,keys:new Map(),ackKey:0,lastFull:-99,out:{fx:[],parts:[],sfx:[],toast:[]},acc:0,lastN:-1,lastPing:0,guestLv:{},guestName:'對手',started:false,lastHeard:0};
+const HO={stkAt:0,seq:0,keys:new Map(),ackKey:0,lastFull:-99,out:{fx:[],parts:[],sfx:[],toast:[],stk:[]},acc:0,lastN:-1,lastPing:0,guestLv:{},guestName:'對手',started:false,lastHeard:0};
 // 差量的基準是「對手已確認收到」的完整快照；新的完整快照就算掉了，差量仍然對得上
 function hostSnapshot(){const t0=now();HO.seq++;const base=HO.keys.get(HO.ackKey);const full=!base||HO.seq-HO.lastFull>=KEY_EVERY;
   const ents=G.ents.filter(e=>e.hp>0||e.kind==='tower').map(e=>{const o=serEnt(e);o['#']=idOf(e);return o});
@@ -4244,7 +4291,7 @@ function hostSnapshot(){const t0=now();HO.seq++;const base=HO.keys.get(HO.ackKey
   else{const dif=o=>{const k=base[o['#']];if(!k)return o;const d={'#':o['#']};for(const f in o){const a=o[f],b=k[f];if(a!==b&&(typeof a!=='object'||a===null||JSON.stringify(a)!==JSON.stringify(b)))d[f]=o[f]}return d};E=ents.map(dif);Pj=projs.map(dif)}
   const s={t:'snap',s:HO.seq,k:full?HO.seq:HO.ackKey,full,ar:G.arena|0,nm:full?[myName(),HO.guestName]:undefined,at:Date.now(),gt:Math.round(G.t*100)/100,time:Math.round(G.time*100)/100,dbl:G.dbl,over:G.over,res:G.res,
     wx:G.wx?serEnt(G.wx):null,zones:G.zones.map(z=>serEnt(z)),P:[serP(G.P[0]),serP(G.P[1])],T:G.T.map(a=>a.map(idOf)),ents:E,projs:Pj,
-    fx:HO.out.fx.splice(0,60),parts:HO.out.parts.splice(0,40),sfx:[...new Set(HO.out.sfx.splice(0))].slice(0,6),toast:HO.out.toast.splice(0),ack:HO.lastN,pong:HO.lastPing};
+    fx:HO.out.fx.splice(0,60),parts:HO.out.parts.splice(0,40),sfx:[...new Set(HO.out.sfx.splice(0))].slice(0,6),toast:HO.out.toast.splice(0),stk:HO.out.stk.splice(0),ack:HO.lastN,pong:HO.lastPing};
   HO.out.parts.length=0;
   const bytes=NET.tx.send(s);NET.stats.snapBytes.push(bytes);if(NET.stats.snapBytes.length>600)NET.stats.snapBytes.shift();(NET.stats.serMs=NET.stats.serMs||[]).push(now()-t0)}
 
@@ -4276,6 +4323,7 @@ function guestApply(s){const st=NET.stats;st.snaps++;const t=now();if(Gs.lastRec
   for(const p of s.parts)Gs.mirror?orig.addPart(W-p[0],H-p[1],COL[p[2]]||p[2],p[3]):orig.addPart(p[0],p[1],p[2],p[3]);
   for(const k of s.sfx)orig.sfx(k);
   for(const id of s.toast)if(CARD[id])orig.toast(CARD[id]);
+  for(const e of s.stk||[]){if(spec)stkShow(e.id,e.s===0?'me':'opp','net');else if(e.s===0)stkShow(e.id,'opp','net')}
   if(s.pong&&s.pong!==Gs.lastPong){Gs.lastPong=s.pong;const r=Math.round(now()-s.pong);if(r>=0&&r<10000){NET.stats.rtt.push(r);if(NET.stats.rtt.length>300)NET.stats.rtt.shift()}}
   if(s.over&&!Gs.overShown){Gs.overShown=true;G.over=true;G.endT=0;G.res=spec?s.res:s.res===0?1:s.res===1?0:-1;setTimeout(()=>showResult(),1400)}
   // 2) 實體：差量要有對應的完整快照才能還原；缺了就請主機馬上補一張
@@ -4313,7 +4361,7 @@ play=function(P,i,x,y){
   const resend=()=>{if(Gs.pending.has(n)&&G&&G.net){if(now()-Gs.pending.get(n).at>4000){Gs.pending.delete(n);NET.stats.rejects++;banner('出牌沒有送達');return}NET.tx.send(msg);setTimeout(resend,700)}};setTimeout(resend,700);
   return true};
 update=function(dt){
-  if(!G||!G.net)return orig.update(dt);
+  if(!G||!G.net){const r=orig.update(dt);try{aiTauntTick()}catch(e){}return r}
   if(G.net==='host'){const s0=S.admin.energy;S.admin.energy=false;orig.update(dt);S.admin.energy=s0;
     HO.acc+=dt*1000;if(HO.acc>=SNAP_MS){HO.acc=0;hostSnapshot()}
     if(HO.lastHeard&&now()-HO.lastHeard>6000&&!G.over&&!HO.warned){HO.warned=true;banner('對手連線不穩')}
@@ -4422,12 +4470,13 @@ function onHostMsg(o){HO.lastHeard=now();HO.warned=false;
     closeOv();SO.inv=null;HO.startAt=Date.now();hostStart(deck,arena);pushPres();return}
   if(o.t==='ping'){HO.lastPing=o.at;return}
   if(o.t==='needkey'){HO.ackKey=0;return}
+  if(o.t==='stk'&&G&&G.net==='host'){const t=now();if(STK_BY[o.id]&&t-HO.stkAt>2500){HO.stkAt=t;stkShow(o.id,'opp','net');HO.out.stk.push({s:1,id:o.id})}return}
   if(o.t==='kack'){if(HO.keys.has(o.k)&&o.k>HO.ackKey)HO.ackKey=o.k;return}
   if(o.t==='intent'&&G&&G.net==='host'){if(o.n<=HO.lastN)return;HO.lastN=o.n;const P=G.P[1];let i=o.i;if(!P.hand[i]||P.hand[i].id!==o.id)i=P.hand.findIndex(h=>h.id===o.id);
     const x=+o.x,y=+o.y;if(i>=0&&Number.isFinite(x)&&Number.isFinite(y)){if(!orig.play(P,i,x,y))NET.stats.hostRejects=(NET.stats.hostRejects||0)+1}return}
   if(o.t==='bye'&&G&&G.net==='host'&&!G.over){banner('對手投降');endBattle(0)}}
 function hostStart(deck,arena){
-  orig.startBattle({opp:deck,arena});G.net='host';dropResume();HO.seq=0;HO.keys=new Map();HO.ackKey=0;HO.lastFull=-99;HO.lastN=-1;HO.out={fx:[],parts:[],sfx:[],toast:[]};
+  orig.startBattle({opp:deck,arena});G.net='host';dropResume();HO.seq=0;HO.keys=new Map();HO.ackKey=0;HO.lastFull=-99;HO.lastN=-1;HO.out={fx:[],parts:[],sfx:[],toast:[],stk:[]};
   const P=G.P[1];P.ai=false;P.lv=id=>Math.max(1,Math.min(12,(HO.guestLv[id]|0)||1));
   const glv=Math.max(1,Math.round(deck.reduce((a,id)=>a+P.lv(id),0)/8));
   G.ents=G.ents.filter(e=>!(e.kind==='tower'&&e.team===1));G.T[1]=[mkTower(1,90,112,false,glv),mkTower(1,270,112,false,glv),mkTower(1,180,64,true,glv)];G.T[1].forEach(t=>G.ents.push(t));
@@ -4504,11 +4553,83 @@ let lastSt='';setInterval(()=>{placeBtn();
   try{history.replaceState(null,'',location.pathname)}catch(e){}openLobby();$('#pvIn').value=pre;join(pre)};setTimeout(go,800)}}
 // 已經有好友的人，一打開遊戲就上線，好友才邀得到
 if(IN_CLAUDE&&friends().length)setTimeout(()=>social(),1500);
-window.__PVP.api={host,join,openLobby,idOf,social,SO,spectate,liveMatches};
+/* ---------- 對戰貼圖與 AI 挑釁（原創：遊戲裡的角色頭像＋短句） ---------- */
+const STK=[['jiuzhe','clown','就這？'],['haoxian','bolt','好險'],['gg','panda','GG'],['zailai','samurai','再來啊'],
+  ['kua','ghost','哭啊'],['xiexie','pirate','謝謝你的塔'],['nice','cap','漂亮！'],['wait','monk','等我一下']]
+  .map(([id,card,txt])=>({id,card,txt})).filter(x=>typeof CARD!=='undefined'&&CARD[x.card]);
+const STK_BY={};STK.forEach(x=>STK_BY[x.id]=x);
+const STK_CD=4000,AI_GAP=30;/* AI_GAP 用遊戲秒數 */window.__STK={log:[]};
+const stkMuted=()=>!!S.stkMute;
+document.head.insertAdjacentHTML('beforeend',`<style id="stkStyle">
+#arenaWrap .stkBtn{position:absolute;right:10px;bottom:10px;z-index:6;width:40px;height:40px;border-radius:50%;border:3px solid #1B1A33;background:linear-gradient(#FFF6C8,#FFCB3D);box-shadow:0 3px 0 #1B1A33;font:900 18px/1 system-ui;display:grid;place-items:center;padding:0;cursor:pointer}
+#arenaWrap .stkBtn:disabled{filter:grayscale(.8);opacity:.6}#arenaWrap .stkBtn small{position:absolute;inset:0;display:grid;place-items:center;font:900 14px system-ui;color:#1B1A33}
+#stkPick{position:absolute;right:8px;bottom:58px;z-index:7;width:min(300px,calc(100% - 16px));padding:8px;border:3px solid #1B1A33;border-radius:16px;background:#fff;box-shadow:0 5px 0 #1B1A33;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#stkPick button.s{border:2px solid #1B1A33;border-radius:12px;background:#F2F7FF;padding:4px 2px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font:900 11px system-ui;color:#1B1A33}
+#stkPick button.s img{width:38px;height:38px;object-fit:cover;border-radius:50%;border:2px solid #1B1A33;background:#FFB15C}
+#stkPick .mute{grid-column:1/-1;border:2px solid #1B1A33;border-radius:99px;background:#fff;padding:5px;font:900 12px system-ui;color:#1B1A33;cursor:pointer}
+#stkPick .mute.on{background:#1B1A33;color:#fff}
+.stkBub{position:absolute;z-index:5;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;animation:stkPop .28s cubic-bezier(.34,1.56,.64,1) both}
+.stkBub.me{left:10px;bottom:10px}.stkBub.opp{right:10px;top:10px}
+.stkBub img{width:68px;height:68px;object-fit:cover;border-radius:50%;border:3px solid #1B1A33;background:#FFB15C;box-shadow:0 3px 0 #1B1A33}
+.stkBub.me img{border-color:#1849B8}.stkBub.opp img{border-color:#B81F3C}
+.stkBub b{font:900 15px system-ui;padding:3px 10px;border-radius:99px;border:3px solid #1B1A33;background:#fff;color:#1B1A33;white-space:nowrap;box-shadow:0 2px 0 #1B1A33}
+.stkBub.opp b{background:#FFE3E8}.stkBub.me b{background:#E3EEFF}
+.stkBub.out{animation:stkOut .25s ease-in forwards}
+@keyframes stkPop{from{transform:scale(.3) rotate(-12deg);opacity:0}}@keyframes stkOut{to{transform:translateY(-10px) scale(.8);opacity:0}}
+@media (prefers-reduced-motion:reduce){.stkBub,.stkBub.out{animation:none}}
+</style>`);
+function stkShow(id,side,src){const x=STK_BY[id];const wrap=$('#arenaWrap');if(!x||!wrap)return;
+  if(side==='opp'&&stkMuted()&&G&&G.net!=='spec'){window.__STK.log.push({id,side,src,muted:1,at:Date.now()});return}
+  wrap.querySelectorAll('.stkBub.'+side).forEach(e=>e.remove());
+  const d=document.createElement('div');d.className='stkBub '+side;d.innerHTML='<img alt=""><b></b>';d.querySelector('img').src=artOf(x.card);d.querySelector('b').textContent=x.txt;
+  wrap.appendChild(d);setTimeout(()=>d.classList.add('out'),1800);setTimeout(()=>d.remove(),2100);
+  try{orig.sfx('card')}catch(e){}window.__STK.log.push({id,side,src,at:Date.now(),gt:G?Math.round(G.t*10)/10:null})}
+let stkLast=-1e9,stkN=0,stkTimer=null;
+function stkSend(id){if(!G||$('#battle').hidden||G.over||G.net==='spec'||!STK_BY[id])return false;const t=now();if(t-stkLast<STK_CD)return false;stkLast=t;
+  stkShow(id,'me','self');closePick();cdTick();
+  if(G.net==='host')HO.out.stk.push({s:0,id});
+  else if(G.net==='guest'&&NET.tx)NET.tx.send({t:'stk',id,n:++stkN});
+  else if(!G.net)aiReply();
+  return true}
+function cdTick(){const b=$('#stkBtn');if(!b)return;clearTimeout(stkTimer);const left=Math.ceil((STK_CD-(now()-stkLast))/1000);
+  if(left>0){b.disabled=true;b.innerHTML='<small>'+left+'</small>';stkTimer=setTimeout(cdTick,250)}else{b.disabled=false;b.textContent='💬'}}
+function closePick(){const p=$('#stkPick');if(p)p.remove()}
+function openPick(){if($('#stkPick')){closePick();return}const wrap=$('#arenaWrap');if(!wrap)return;
+  const p=document.createElement('div');p.id='stkPick';p.setAttribute('role','dialog');p.setAttribute('aria-label','傳送貼圖');
+  p.innerHTML=STK.map(x=>'<button class="s" data-k="'+x.id+'"><img alt=""><span></span></button>').join('')+'<button class="mute"></button>';
+  p.querySelectorAll('button.s').forEach(b=>{const x=STK_BY[b.dataset.k];b.querySelector('img').src=artOf(x.card);b.querySelector('span').textContent=x.txt;b.setAttribute('aria-label',x.txt);b.onclick=e=>{e.stopPropagation();stkSend(x.id)}});
+  const m=p.querySelector('.mute'),paint=()=>{m.textContent=stkMuted()?'對手貼圖：已靜音（點一下恢復）':'靜音對手貼圖';m.classList.toggle('on',stkMuted())};paint();
+  m.onclick=e=>{e.stopPropagation();S.stkMute=!S.stkMute;save();paint()};
+  p.addEventListener('pointerdown',e=>e.stopPropagation());wrap.appendChild(p)}
+function placeStkBtn(){const wrap=$('#arenaWrap');if(!wrap)return;let b=$('#stkBtn');const show=G&&!$('#battle').hidden&&G.net!=='spec'&&!(G.P&&G.P[0]&&G.P[0].ai);
+  if(!b&&show){b=document.createElement('button');b.id='stkBtn';b.className='stkBtn';b.type='button';b.setAttribute('aria-label','傳貼圖');b.textContent='💬';
+    b.addEventListener('pointerdown',e=>e.stopPropagation());b.onclick=e=>{e.stopPropagation();openPick()};wrap.appendChild(b);cdTick()}
+  if(b)b.hidden=!show;if(!show)closePick()}
+setInterval(placeStkBtn,400);
+// 電腦挑釁：只在玩家對電腦時；同一場 30 秒內最多一次；開場 10 秒內不傳；管理員面板可以關
+const AI={last:-1e9,towers:null,hist:[],ended:false,g:null};
+const aiOn=()=>!(S.admin&&S.admin.noTaunt);
+function aiSend(id,force){if(!aiOn()||!STK_BY[id])return false;const t=G.t;if(!force&&(t-AI.last<AI_GAP||t<10))return false;AI.last=t;stkShow(id,'opp','ai');return true}
+function aiReply(){if(Math.random()<.35)setTimeout(()=>{if(G&&!G.net&&!G.over)aiSend(Math.random()<.5?'kua':'zailai')},1200)}
+function aiTauntTick(){if(!G||G.net||G.auto||G.headless||!G.P||G.P[0].ai||!G.P[1].ai||$('#battle').hidden)return;
+  if(AI.g!==G){AI.g=G;AI.towers=null;AI.hist=[];AI.ended=false;AI.last=-1e9}
+  const alive=k=>G.T[k].filter(t=>t.hp>0).length,hp=G.T[0].reduce((a,t)=>a+Math.max(0,t.hp),0);
+  const cur=[alive(0),alive(1)];
+  if(AI.towers){if(cur[0]<AI.towers[0])aiSend(Math.random()<.5?'xiexie':'jiuzhe');else if(cur[1]<AI.towers[1]&&Math.random()<.6)aiSend(Math.random()<.5?'haoxian':'zailai')}
+  AI.towers=cur;
+  // 漏防：5 秒內己方燈塔掉超過 700 血、而且己方場上沒有部隊
+  const t=G.t;AI.hist.push([t,hp]);while(AI.hist.length&&t-AI.hist[0][0]>5)AI.hist.shift();
+  if(AI.hist.length>1&&AI.hist[0][1]-hp>700&&!G.ents.some(e=>e.kind==='unit'&&e.team===0&&e.hp>0)){AI.hist=[];aiSend(Math.random()<.6?'jiuzhe':'kua')}
+  if(G.over&&!AI.ended){AI.ended=true;if(G.res===1&&G.t-AI.last>3)aiSend('gg',true)}}
+// 管理員面板：加一列「電腦挑釁貼圖」開關（齒輪按鈕綁的是原本的 adminPanel，所以改成看到面板出現時補上）
+new MutationObserver(()=>{const adm=document.querySelector('#ovRoot [aria-label="管理員模式"] .adm');if(!adm||document.getElementById('aTaunt'))return;
+  adm.insertAdjacentHTML('beforeend','<div class="row2"><div><b>電腦挑釁貼圖</b><small>跟電腦對戰時，電腦偶爾傳貼圖挑釁（30 秒最多一次）</small></div><button class="sw" id="aTaunt" aria-label="電腦挑釁貼圖"></button></div>');
+  const b=document.getElementById('aTaunt'),paint=()=>b.classList.toggle('on',aiOn());paint();b.onclick=()=>{S.admin.noTaunt=aiOn();save();paint()}}).observe(document.getElementById('ovRoot'),{childList:true,subtree:true});
+window.__PVP.api={stkSend,stkShow,STK,host,join,openLobby,idOf,social,SO,spectate,liveMatches};
 })();
 </script>
 <!-- PVP-END -->
-<script>(()=>{const V="2026-11-09-45d6ff734d";let pending=false;
+<script>(()=>{const V="2026-11-09-a64e4f0107";let pending=false;
 const busy=()=>typeof G!=='undefined'&&G&&document.querySelector('#battle')&&!document.querySelector('#battle').hidden;
 const check=()=>fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{t=t.trim();if(t&&t!==V)pending=true;if(pending&&!busy())location.reload()}).catch(()=>{});
 setTimeout(check,4000);setInterval(check,5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
